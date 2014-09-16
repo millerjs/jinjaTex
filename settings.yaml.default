@@ -1,8 +1,8 @@
 
 report:
   version: 1.1
-  approver: Robert Grossman
-  author: Automated
-  title: Requirements Specification
+  approver: 
+  author: 
+  title: Title
   subtitle: Automated Report
-  preamble: preamble_general.tex
+  preamble: 
