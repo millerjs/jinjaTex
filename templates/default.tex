@@ -1,0 +1,24 @@
+{% if preamble %}
+\include{ {{ preamble }} }
+{% endif %}
+
+\def \currentversion  {{ version }}
+\def \currentauthor   {{ author }}
+\def \currentapprover {{ approver }}
+\def \currenttitle    {{ title }}
+\def \currentsubtitle {{ subtitle }}
+
+\begin{document}
+
+\maketitlepage
+
+{% from "macros.ply" import Environment, Header %}
+{% for block in document.blocks %}
+{% if 'header' in block.blockType %}           
+{{ Header(block) }}
+{% elif 'environment' in block.blockType %}
+{{ Environment(block) }}
+{% endif %}
+{% endfor %}
+
+\end{document}

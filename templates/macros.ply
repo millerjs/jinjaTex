@@ -1,0 +1,16 @@
+
+{# LaTex Environment #}
+
+{% macro Environment(environment) -%}
+\begin{ {{ environment['type'] }} }{% for arg in environment['args'] %}{ {{ arg }} }{% endfor %}
+{{ environment['body'] }}
+\end{ {{ environment['type'] }} }
+{%- endmacro %}
+
+{# LaTex Header #}
+
+{% macro Header(header) -%}
+\{{ header['type'] }}{ {{ header['name'] }} }
+{{ header['body'] }}
+{%- endmacro %}
+
