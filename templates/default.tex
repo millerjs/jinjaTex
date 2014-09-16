@@ -1,23 +1,30 @@
-{% if preamble %}
-\include{ {{ preamble }} }
-{% endif %}
+\nonstopmode 
 
-\def \currentversion  {{ version }}
-\def \currentauthor   {{ author }}
-\def \currentapprover {{ approver }}
-\def \currenttitle    {{ title }}
-\def \currentsubtitle {{ subtitle }}
+\include{{ preamble | braced }}
+
+\def \currentversion  {{ version | braced }}
+\def \currentauthor   {{ author | braced }}
+\def \currentapprover {{ approver | braced }}
+\def \currenttitle    {{ title | upper | braced }}
+\def \currentsubtitle {{ subtitle | upper | braced }}
 
 \begin{document}
 
 \maketitlepage
 
-{% from "macros.ply" import Environment, Header %}
+{% from "macros.tex" import Environment, Header, Image, Table %}
+
 {% for block in document.blocks %}
 {% if 'header' in block.blockType %}           
 {{ Header(block) }}
 {% elif 'environment' in block.blockType %}
 {{ Environment(block) }}
+{% elif 'image' in block.blockType %}
+{{ Image(block) }}
+{% elif 'table' in block.blockType %}
+{{ Table(block) }}
+{% else %}
+{{ block['body'] }}
 {% endif %}
 {% endfor %}
 

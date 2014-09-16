@@ -1,9 +1,15 @@
-import jinja2
+import jinja2, tempfile, atexit, shutil, os, subprocess
 from jinja2 import Template
+
+def filter_braced(text):
+    return "{%s}" % text
+
+def newline(text):
+    return text + "\\\\"
 
 class Block:
     
-    def __init__(self, blockType = None, **kwargs):
+    def __init__(self, blockType = "", **kwargs):
         self.children = []
         self.blockType = blockType
 
@@ -29,19 +35,43 @@ class Block:
             self.vars[key] = value
         else:
             return 
+
+class Image(Block):
+    def __init__(self, **kwargs):
+
+        args = {
+            "path": "",
+            "label": "",
+            "width": .9,
+            "caption": "",
+            }
+
+        for key, value in kwargs.iteritems():
+            args[key] = value
+
+        Block.__init__(self, blockType = 'image', **args)
+
+    def __repr__(self):
+        return "<PlyTeX Image %s>" % hash(self)
     
 class Header(Block):
-
     def __init__(self, **kwargs):
-        Block.__init__(self, 'header', **kwargs)
+        Block.__init__(self, blockType = 'header', **kwargs)
 
     def __repr__(self):
         return "<PlyTeX Header %s>" % hash(self)
 
-class Environment(Block):
-
+class Table(Block):
     def __init__(self, **kwargs):
-        Block.__init__(self, 'environment', **kwargs)
+        Block.__init__(self, blockType = 'table', **kwargs)
+
+    def __repr__(self):
+        return "<PlyTeX Header %s>" % hash(self)
+
+
+class Environment(Block):
+    def __init__(self, **kwargs):
+        Block.__init__(self,  blockType = 'table', **kwargs)
 
     def __repr__(self):
         return "<PlyTeX Environment %s>" % hash(self)
@@ -49,6 +79,8 @@ class Environment(Block):
 class Document:
 
     def __init__(self, templateVars = None):
+
+        atexit.register(self.__cleanup__)
 
         self.vars = {
             "envPath": "templates/",
@@ -63,6 +95,11 @@ class Document:
         self.templateLoader = jinja2.FileSystemLoader(self['envPath'])
         self.templateEnv = jinja2.Environment(loader=self.templateLoader)
 
+        self.temporaryPath = None
+        self.temporaryDir = tempfile.mkdtemp()
+        self.templateEnv.filters['braced'] = filter_braced
+        self.templateEnv.filters['newline'] = newline
+
     def getSection(self, name):
         return None
 
@@ -76,6 +113,43 @@ class Document:
         self.blocks.append(environment)
         return environment
 
+    def Image(self, **kwargs):
+
+        if 'path' not in kwargs:
+            raise Exception("Please specify image kwarg 'path'")
+
+        path = kwargs['path']
+        directory = self.temporaryDir
+
+        dst = os.path.join(directory, os.path.basename(os.path.normpath(path)))
+        shutil.copyfile(path, dst)
+
+        print "Copied file %s to %s" % (path, dst)
+
+        image = Image(**kwargs)
+        self.blocks.append(image)
+        return image
+
+    def Table(self, header, rows, **kwargs):
+        kwargs['cols'] = len(header)
+
+
+        convertedRows = []
+        for i in range(len(rows)):
+            if len(rows[i]) < len(header):
+                rows[i] += [""] * (len(header) - len(rows[i]))
+                print len(rows[i])
+            convertedRows.append(" & ".join(rows[i]) + " \\\\ \hline " )
+
+        for i in range(len(header)):
+            header[i] = "\\textbf{%s}" % header[i]
+
+        kwargs['header'] = " & ".join(header)
+        kwargs['rows'] = convertedRows
+
+        table = Table(**kwargs)
+        self.blocks.append(table)
+        return table
 
     def loadTemplate(self, template_path):
         try:
@@ -109,6 +183,70 @@ class Document:
 
         if self.template:
             return self.template.render(self.templateVars, document = self)
+
+    def render(self, templateVars = None, output = None, temporary = True):
+
+        text = self.renders(templateVars)
+        directory = self.temporaryDir
+
+        path = tempfile.mktemp(dir=directory, suffix = ".tex")
+        if temporary:
+            self.temporaryPath = path
+        print "made file: ", path
+
+        local = os.path.basename(os.path.normpath(path))
+
+        if templateVars['preamble']:
+            preamble = templateVars['preamble'] + ".tex"
+            dst = os.path.join(directory, os.path.basename(os.path.normpath(preamble)))
+            shutil.copyfile(preamble, dst)
+
+        with open(path, 'w') as latex:
+            latex.write(text)
+
+        latex_proc = subprocess.Popen(["pdflatex", local], 
+                                      cwd=directory, 
+                                      stdout = subprocess.PIPE, 
+                                      stderr = subprocess.PIPE)
+
+        latex_proc = subprocess.Popen(["pdflatex", local], 
+                                      cwd=directory, 
+                                      stdout = subprocess.PIPE, 
+                                      stderr = subprocess.PIPE)
+
+        for line in latex_proc.stdout:
+            print line,
+
+        err = latex_proc.stderr.read()
+
+        if latex_proc.returncode == 0:
+            print "PlyTex SUCCESS"
+
+        else:
+            print "*** PlyTex might have failed ***"
+            print err
+
+        try:
+            shutil.copyfile(path.replace('.tex', '.pdf'), output)
+
+            print "Copied to %s" % output
+        except Exception, msg:
+            print "Unable to copy file to required location", msg
+
+            
+        if self.template:
+            return self.template.render(self.templateVars, document = self)
+
+
+    def __cleanup__(self):
+        # raw_input()
+        if self.temporaryDir:
+            shutil.rmtree(self.temporaryDir)
+            print "deleted", self.temporaryDir
+
+        elif self.temporaryPath:
+            os.remove(self.temporaryPath)
+
 
     def __repr__(self):
         return "<PlyTeX Document %s>" % hash(self)

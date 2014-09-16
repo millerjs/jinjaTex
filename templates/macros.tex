@@ -28,29 +28,12 @@
 {%- endmacro %}
 
 {% macro Table(table) -%}
-\begin{center}
-\begin{longtable}{|l|l|l|}
-\caption[{{ table['caption'] | braced }}
-{{ table['title'] | braced }} 
-\label{{ table['label'] | braced }} \\
-
-\hline \multicolumn{1}{c|}{\textbf{Time (s)}} & \multicolumn{1}{c|}{\textbf{Triple chosen}} & \multicolumn{1}{c|}{\textbf{Other feasible triples}} \\ \hline 
-\endfirsthead
-
-\multicolumn{{ table['rows'] | length | braced }}{c}%
-{ {\bfseries \tablename\ \thetable{} -- ... continued} }  \\
-\hline 
-{% for column in table['columns'] %}
-\multicolumn{1}{c|}{ \textbf{{ column | braced }} } &
-{% endfor %} \\ \hline 
-\endhead
-
-\hline \multicolumn{3}{|r|} {{ table['format'] | braced }} {continued ...} \\ \hline
-\endfoot
-
-\hline \hline
-\endlastfoot
-{{ table['rows'] }}
-\end{longtable}
-\end{center}{%- endmacro %}
+    \begin{longtable}{|*{{ table['cols'] }}{p{2cm}|} }
+    \hline
+    {{ table['header'] }} \\ \hline
+    {% for row in table['rows'] %}
+    {{ row }}
+    {% endfor %}
+    \end{longtable}
+{%- endmacro %}
 
