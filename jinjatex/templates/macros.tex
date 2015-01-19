@@ -5,7 +5,7 @@
 {% macro Environment(environment) -%}
 \begin{{ environment['type'] | braced }}{% for arg in environment['args'] %}{{ arg | braced }}{% endfor %}
 {{ environment['body'] }}
-\end{{ environment['type'] | braced }} 
+\end{{ environment['type'] | braced }}
 {%- endmacro %}
 
 {# LaTex Header #}
@@ -21,8 +21,8 @@
 {%- endmacro %}
 
 {% macro Image(image) -%}
-\begin{figure}[h] \centering \vspace{-10pt} 
-  \includegraphics[width={{ image['width'] }}\textwidth]{{ image['path'] | braced }}\vspace{-10pt} 
+\begin{figure}[h] \centering \vspace{-10pt}
+  \includegraphics[width={{ image['width'] }}\textwidth]{{ image['path'] | braced }}\vspace{-10pt}
   \caption{{ image['caption'] | braced }}\label{{ image['label'] | braced }}
 \end{figure}
 {%- endmacro %}
@@ -31,18 +31,18 @@
 \begin{center}
 \begin{longtable}{|l|l|l|}
 \caption[{{ table['caption'] | braced }}
-{{ table['title'] | braced }} 
+{{ table['title'] | braced }}
 \label{{ table['label'] | braced }} \\
 
-\hline \multicolumn{1}{c|}{\textbf{Time (s)}} & \multicolumn{1}{c|}{\textbf{Triple chosen}} & \multicolumn{1}{c|}{\textbf{Other feasible triples}} \\ \hline 
+\hline \multicolumn{1}{c|}{\textbf{Time (s)}} & \multicolumn{1}{c|}{\textbf{Triple chosen}} & \multicolumn{1}{c|}{\textbf{Other feasible triples}} \\ \hline
 \endfirsthead
 
 \multicolumn{{ table['rows'] | length | braced }}{c}%
 { {\bfseries \tablename\ \thetable{} -- ... continued} }  \\
-\hline 
+\hline
 {% for column in table['columns'] %}
 \multicolumn{1}{c|}{ \textbf{{ column | braced }} } &
-{% endfor %} \\ \hline 
+{% endfor %} \\ \hline
 \endhead
 
 \hline \multicolumn{3}{|r|} {{ table['format'] | braced }} {continued ...} \\ \hline
@@ -53,4 +53,3 @@
 {{ table['rows'] }}
 \end{longtable}
 \end{center}{%- endmacro %}
-
